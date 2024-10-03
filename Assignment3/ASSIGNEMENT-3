@@ -1,0 +1,240 @@
+--uncomment each code by itself to test and run it
+--1st query is designed to retrieve information about pairs of cocktails 
+--that have been rated by the same users, and it calculates various statistics about those ratings
+/*SELECT
+    c1.Name AS cocktail1_name,
+    c2.Name AS cocktail2_name,
+    COUNT(DISTINCT r1.UserID) AS co_ratings,
+    ROUND(AVG(r1.Rating), 2) AS avg_rating_cocktail1,
+    ROUND(AVG(r2.Rating), 2) AS avg_rating_cocktail2
+FROM
+    Rating r1
+JOIN
+    Rating r2 ON r1.UserID = r2.UserID AND r1.CocktailID < r2.CocktailID
+JOIN
+    Cocktail c1 ON r1.CocktailID = c1.CocktailID
+JOIN
+    Cocktail c2 ON r2.CocktailID = c2.CocktailID
+GROUP BY
+    r1.CocktailID, r2.CocktailID
+HAVING
+    COUNT(DISTINCT r1.UserID) > 1
+ORDER BY
+    co_ratings DESC,
+    (AVG(r1.Rating) + AVG(r2.Rating)) DESC
+LIMIT 10;*/
+-----------------------------------------------
+--2nd query analyzes cocktail ratings on a monthly basis,
+-- providing insights into how different cocktails are rated across different months
+/*SELECT
+    MONTH(RatingDate) AS rating_month,
+    c.Name AS cocktail_name,
+    AVG(r.Rating) AS avg_rating
+FROM
+    Rating r
+JOIN
+    Cocktail c ON r.CocktailID = c.CocktailID
+GROUP BY
+    rating_month, cocktail_name
+ORDER BY
+    rating_month, avg_rating DESC;*/
+-------------------------------------------------
+--3rd query finds and also ranks cocktails similar to a given cocktail (specified by @GivenCocktailID), 
+--based on shared ingredients and average ratings.
+/*SELECT
+    ci2.CocktailID AS SimilarCocktailID,
+    c.Name AS CocktailName,
+    si.SharedIngredientCount,
+    ar.AvgRating
+FROM
+    (
+        SELECT
+            c1.CocktailID AS CocktailID1,
+            c2.CocktailID AS CocktailID2,
+            COUNT(*) AS SharedIngredientCount
+        FROM
+            Cocktail_ingredients c1
+        JOIN
+            Cocktail_ingredients c2 ON c1.IngredientID = c2.IngredientID
+        WHERE
+            c1.CocktailID != c2.CocktailID
+        GROUP BY
+            c1.CocktailID, c2.CocktailID
+    ) si
+JOIN
+    Cocktail c ON si.CocktailID2 = c.CocktailID
+JOIN
+    (
+        SELECT
+            CocktailID,
+            AVG(Rating) AS AvgRating
+        FROM
+            Rating
+        GROUP BY
+            CocktailID
+    ) ar ON c.CocktailID = ar.CocktailID
+JOIN
+    Cocktail_ingredients ci2 ON ci2.CocktailID = si.CocktailID2
+WHERE
+    si.CocktailID1 = @GivenCocktailID
+ORDER BY
+    si.SharedIngredientCount DESC,
+    ar.AvgRating DESC; */
+--------------------------------------------------
+--4th query finds pairs of cocktails that share at least 3 ingredients
+/*
+SELECT 
+    c1.Name AS cocktail1_name,
+    c2.Name AS cocktail2_name,
+    COUNT(DISTINCT ci1.IngredientID) AS shared_ingredient_count,
+    GROUP_CONCAT(DISTINCT i.Name SEPARATOR ', ') AS shared_ingredients,
+    CASE WHEN a1.CocktailID IS NOT NULL THEN 'Alcoholic' ELSE 'Non-Alcoholic' END AS type1,
+    CASE WHEN a2.CocktailID IS NOT NULL THEN 'Alcoholic' ELSE 'Non-Alcoholic' END AS type2,
+    ROUND(AVG(r1.Rating), 2) AS avg_rating1,
+    ROUND(AVG(r2.Rating), 2) AS avg_rating2
+FROM 
+    Cocktail c1
+JOIN 
+    Cocktail_ingredients ci1 ON c1.CocktailID = ci1.CocktailID
+JOIN 
+    Cocktail c2 ON c1.CocktailID < c2.CocktailID
+JOIN 
+    Cocktail_ingredients ci2 ON c2.CocktailID = ci2.CocktailID AND ci1.IngredientID = ci2.IngredientID
+JOIN 
+    Ingredient i ON ci1.IngredientID = i.IngredientID
+LEFT JOIN 
+    Alcoholic a1 ON c1.CocktailID = a1.CocktailID
+LEFT JOIN 
+    Alcoholic a2 ON c2.CocktailID = a2.CocktailID
+LEFT JOIN 
+    Rating r1 ON c1.CocktailID = r1.CocktailID
+LEFT JOIN 
+    Rating r2 ON c2.CocktailID = r2.CocktailID
+GROUP BY 
+    c1.CocktailID, c2.CocktailID
+HAVING 
+    shared_ingredient_count >= 3
+    AND type1 != type2
+ORDER BY 
+    shared_ingredient_count DESC, 
+    ROUND(AVG(r1.Rating), 2) + ROUND(AVG(r2.Rating), 2) DESC;
+*/
+--------------------------------------------------
+--5th query finds the highest-rated cocktail (considering both the average rating and the number of 
+--ratings), and provides its name, average rating, number of ratings, and a detailed list of its 
+--ingredients with their amounts.
+/*
+SELECT
+    c.Name AS cocktail_name,
+    AVG(r.Rating) AS avg_rating,
+    COUNT(r.UserID) AS rating_count,
+    GROUP_CONCAT(DISTINCT CONCAT(i.Name, ' (', ci.Amount, ')')
+                 ORDER BY i.Name SEPARATOR ', ') AS ingredients
+FROM
+    Cocktail c
+JOIN
+    Cocktail_ingredients ci ON c.CocktailID = ci.CocktailID
+JOIN
+    Ingredient i ON ci.IngredientID = i.IngredientID
+LEFT JOIN
+    Rating r ON c.CocktailID = r.CocktailID
+GROUP BY
+    c.CocktailID, c.Name
+ORDER BY
+    AVG(r.Rating) DESC,
+    COUNT(r.UserID) DESC
+LIMIT 1;
+*/
+--------------------------------------------------
+--6th query identifies pairs of ingredients that are commonly used together in multiple cocktails, 
+--ranks them based on the average ratings of the cocktails they appear in, and provides information
+-- on how many cocktails use each pair.
+/*
+SELECT
+    i1.Name AS ingredient1,
+    i2.Name AS ingredient2,
+    COUNT(DISTINCT ci1.CocktailID) AS num_cocktails,
+    AVG(r.Rating) AS avg_rating
+FROM
+    Cocktail_ingredients ci1
+JOIN
+    Cocktail_ingredients ci2 ON ci1.CocktailID = ci2.CocktailID AND ci1.IngredientID < ci2.IngredientID
+JOIN
+    Ingredient i1 ON ci1.IngredientID = i1.IngredientID
+JOIN
+    Ingredient i2 ON ci2.IngredientID = i2.IngredientID
+JOIN
+    Rating r ON ci1.CocktailID = r.CocktailID
+GROUP BY
+    i1.Name, i2.Name
+HAVING
+    num_cocktails > 1
+ORDER BY
+    avg_rating DESC;
+*/
+--------------------------------------------------
+--7th query finds the three most commonly used ingredients in cocktails, showing how many cocktails 
+--each is used in and the average rating of cocktails containing that ingredient. It essentially 
+--identifies the most popular and well-rated ingredients.
+/*
+SELECT i.Name,
+       COUNT(DISTINCT ci.CocktailID) AS num_cocktails,
+       AVG(r.Rating) AS avg_rating
+FROM Cocktail_ingredients ci
+JOIN Ingredient i ON ci.IngredientID = i.IngredientID
+JOIN Rating r ON ci.CocktailID = r.CocktailID
+GROUP BY i.Name
+ORDER BY num_cocktails DESC, avg_rating DESC
+LIMIT 3;
+*/
+--------------------------------------------------
+--8th query provides a list of alcoholic cocktails, sorted from strongest to weakest and then by 
+--popularity (based on ratings), showing each cocktail's name, alcohol percentage, all its ingredients, 
+--and its average rating.
+/*
+SELECT
+    c.Name AS cocktail_name,
+    a.AlcoholPercentage,
+    GROUP_CONCAT(i.Name SEPARATOR ', ') AS ingredients,
+    AVG(r.Rating) AS avg_rating
+FROM
+    Alcoholic a
+JOIN
+    Cocktail c ON a.CocktailID = c.CocktailID
+JOIN
+    Cocktail_ingredients ci ON c.CocktailID = ci.CocktailID
+JOIN
+    Ingredient i ON ci.IngredientID = i.IngredientID
+LEFT JOIN
+    Rating r ON c.CocktailID = r.CocktailID
+GROUP BY
+    c.Name, a.AlcoholPercentage
+ORDER BY
+    a.AlcoholPercentage DESC, avg_rating DESC;
+*/
+--------------------------------------------------
+--9th query lists all cocktails that contain at least one "rare" ingredient (an ingredient used in 
+--fewer than 4 cocktails), along with the details of those rare ingredients. Each row in the result 
+--will show a cocktail and one of its rare ingredients.
+/*
+SELECT
+    c.CocktailID,
+    c.Name AS CocktailName,
+    i.IngredientID,
+    i.Name AS IngredientName
+FROM
+    Cocktail c
+JOIN
+    Cocktail_Ingredients ci ON c.CocktailID = ci.CocktailID
+JOIN
+    Ingredient i ON ci.IngredientID = i.IngredientID
+JOIN
+    (SELECT IngredientID
+     FROM Cocktail_Ingredients
+     GROUP BY IngredientID
+     HAVING COUNT(CocktailID) < 4) rare_ingredients
+ON i.IngredientID = rare_ingredients.IngredientID
+ORDER BY
+    c.CocktailID, i.IngredientID;
+*/
+--------------------------------------------------
