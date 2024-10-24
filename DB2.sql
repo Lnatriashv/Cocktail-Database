@@ -67,3 +67,9 @@ CREATE TABLE Rating (
     FOREIGN KEY (UserID) REFERENCES User(UserID),
     FOREIGN KEY (CocktailID) REFERENCES Cocktail(CocktailID)
 );
+
+CREATE TABLE Bartender (
+  BartenderID INT PRIMARY KEY AUTO_INCREMENT,
+  YearsOfExperience INT,
+  Name VARCHAR(255)
+  );
