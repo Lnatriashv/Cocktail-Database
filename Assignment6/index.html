@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cocktail Corner</title>
@@ -361,8 +365,9 @@
                     border-radius: 0 0 5px 5px;
                     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
                     display: none;
-                    z-index: 1000;
+                    z-index: 1;
                     overflow: hidden;
+
                 }
             
                 .search-input-wrapper:focus-within .search-dropdown {
@@ -410,6 +415,8 @@
         </div>
     </header>
 
+    
+
     <div class="video-container">
         <video autoplay loop muted playsinline>
             <source src="./videos/slideshow.mp4" type="video/mp4">
@@ -446,6 +453,45 @@
             </div>
         </div>
     </section>
+
+    <script>
+        const cocktailsDB = [
+            { name: "Mojito", ingredients: ["White rum", "Sugar", "Lime juice", "Soda water", "Mint"] },
+            { name: "Margarita", ingredients: ["Tequila", "Triple sec", "Lime juice", "Salt"] },
+            { name: "Manhattan", ingredients: ["Whiskey", "Sweet vermouth", "Angostura bitters"] },
+            { name: "Mai Tai", ingredients: ["White rum", "Dark rum", "Orange curaçao", "Orgeat syrup"] },
+            { name: "Moscow Mule", ingredients: ["Vodka", "Ginger beer", "Lime juice"] },
+            { name: "Martini", ingredients: ["Gin", "Dry vermouth", "Olive"] },
+            { name: "Daiquiri", ingredients: ["White rum", "Lime juice", "Simple syrup"] },
+            { name: "Negroni", ingredients: ["Gin", "Campari", "Sweet vermouth"] }
+        ];
+    </script>
+
+     <!-- Add the autocomplete functionality -->
+     <script>
+        $(document).ready(function () {
+            $("#searchInput").autocomplete({
+                source: function (request, response) {
+                    const searchTerm = request.term.toLowerCase();
+
+                    const matches = cocktailsDB.filter(cocktail =>
+                        cocktail.name.toLowerCase().includes(searchTerm) ||
+                        cocktail.ingredients.some(ingredient => ingredient.toLowerCase().includes(searchTerm))
+                    ).map(cocktail => ({
+                        label: `${cocktail.name} (${cocktail.ingredients.join(", ")})`,
+                        value: cocktail.name
+                    }));
+
+                    response(matches);
+                },
+                minLength: 1,
+                select: function (event, ui) {
+                    const selectedCocktail = cocktailsDB.find(cocktail => cocktail.name === ui.item.value);
+                    alert(`You selected: ${ui.item.value}\nIngredients: ${selectedCocktail.ingredients.join(", ")}`);
+                }
+            });
+        });
+    </script>
     <footer>
         <div class="footer-content">
             <div class="footer-section">
