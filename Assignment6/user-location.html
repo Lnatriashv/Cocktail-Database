@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Location</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="./location.js" defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            color: white;
+        }
+
+        .map-container {
+            text-align: center;
+            padding: 1rem;
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+            margin: 20px;
+        }
+
+        .map-title {
+            font-family: 'Pacifico', cursive;
+            font-size: 1.5rem;
+            color: #00ffff;
+            margin-bottom: 1rem;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .map-info {
+            margin-top: 10px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            display: inline-block;
+        }
+
+        nav a:hover {
+            color: #00ffff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="./index.html">Back to Home</a> <!-- Link back to the home page -->
+        </nav>
+    </header>
+
+    <main class="map-container">
+        <h1 class="map-title">Your Location</h1>
+        <div id="map"></div>
+        <p id="location-info" class="map-info">Fetching your location...</p>
+    </main>
+</body>
+</html>
